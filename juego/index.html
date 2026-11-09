@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Pixel Love 💗</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;min-height:100vh;background:#2d1b4e;color:#fff1f6;
+  font-family:'Press Start 2P',monospace;font-size:12px;line-height:1.9;
+  background-image:radial-gradient(rgba(255,255,255,.35) 1px,transparent 1px);background-size:38px 38px;
+}
+#app{width:100%;max-width:460px;margin:0 auto;padding:18px 14px 40px;text-align:center}
+h1{font-size:22px;color:#ff8fb1;text-shadow:3px 3px 0 #8a3a6b;margin:10px 0}
+h2{font-size:15px;color:#ffd166;margin:8px 0 14px}
+p{margin:8px 0}
+.panel{background:#3d2766;border:4px solid #ff8fb1;box-shadow:0 0 0 4px #2d1b4e,8px 8px 0 4px #1b1030;padding:18px 14px;margin:18px 0}
+.pantalla{display:none}
+.pantalla.on{display:block}
+input{
+  font:inherit;font-size:13px;width:100%;padding:14px 10px;margin:8px 0;
+  background:#fff1f6;color:#2d1b4e;border:4px solid #ff8fb1;text-align:center;border-radius:0;
+}
+.btn{
+  font:inherit;font-size:13px;width:100%;padding:16px 10px;margin:10px 0;color:#fff;
+  background:#ff6b9a;border:0;box-shadow:0 6px 0 #b83a68;cursor:pointer;touch-action:manipulation;
+}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 #b83a68}
+.btn.az{background:#5b8cff;box-shadow:0 6px 0 #3158b8}
+.btn.mo{background:#9b5de5;box-shadow:0 6px 0 #6a35a8}
+.btn.am{background:#ffb703;color:#3d2766;box-shadow:0 6px 0 #b37d00}
+svg.px{display:block;width:100%;height:auto;image-rendering:pixelated;shape-rendering:crispEdges}
+.fila{display:flex;justify-content:center;align-items:flex-end;gap:10px;margin-top:10px}
+.sp{width:86px}
+.sp.c{width:44px;margin-bottom:14px}
+.codigo{font-size:34px;letter-spacing:6px;color:#ffd166;margin:14px 0}
+.grande{font-size:36px;color:#ffd166;margin:10px 0;min-height:50px}
+.marcador{font-size:11px;color:#ffd166;margin:6px 0 12px}
+.msg{color:#ffd166;min-height:24px;font-size:11px}
+.hud{display:flex;justify-content:space-between;font-size:11px;color:#ffd166}
+canvas{display:block;width:100%;height:auto;image-rendering:pixelated;touch-action:none;background:#2d1b4e;border:4px solid #ff8fb1;margin:8px 0}
+#pad{height:46vh;display:flex;align-items:center;justify-content:center;font-size:18px;margin-top:16px;user-select:none;touch-action:manipulation}
+.rojo{background:#e63946}
+.verde{background:#2ecc71;color:#123}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Pantalla 1: inicio -->
+  <section id="inicio" class="pantalla on">
+    <div id="portada" class="fila"></div>
+    <h1>PIXEL LOVE</h1>
+    <p>Minijuegos para dos</p>
+    <div class="panel">
+      <p>Tu nombre</p>
+      <input id="nombre" maxlength="12" placeholder="Tu nombre" autocomplete="off">
+      <button class="btn" id="bCrear">CREAR SALA</button>
+      <p>o escribe el código</p>
+      <input id="codeIn" maxlength="4" placeholder="CÓDIGO" autocapitalize="characters" autocomplete="off">
+      <button class="btn az" id="bUnir">UNIRME</button>
+      <div class="msg" id="msg"></div>
+    </div>
+  </section>
+
+  <!-- Pantalla 2: esperando a la pareja -->
+  <section id="espera" class="pantalla">
+    <h2>SALA LISTA</h2>
+    <div class="panel">
+      <p>Mándale este código a tu pareja:</p>
+      <div class="codigo" id="codigo">----</div>
+      <p>Esperando que entre... 🧸</p>
+    </div>
+  </section>
+
+  <!-- Pantalla 3: menú de juegos -->
+  <section id="menu" class="pantalla">
+    <h2>ELIGE UN JUEGO</h2>
+    <div class="marcador" id="marcador"></div>
+    <button class="btn" data-g="lluvia">💗 ATRAPA CORAZONES</button>
+    <button class="btn az" data-g="reflejos">⚡ REFLEJOS</button>
+    <button class="btn mo" data-g="carrera">🚗 CARRITOS</button>
+    <p class="msg">Al elegir, el juego empieza en los dos celulares</p>
+  </section>
+
+  <!-- Pantalla 4: aquí aparece cada juego -->
+  <section id="juego" class="pantalla"></section>
+
+</div>
+
+<script>
+/* ========== DIBUJOS PIXEL ART ========== */
+const COL = {b:'#c98f6b', p:'#ff8fb1', k:'#3d2518', m:'#f4c7ab', r:'#ff4d7d', w:'#ffd0e0', v:'#7a4bb8', g:'#9fd8ff'};
+const OSO = ["bb......bb","bpb....bpb",".bbbbbbbb.","bbbbbbbbbb","bbkbbbbkbb","bpbbbbbbpb","bbbmmmmbbb","bbbmkkmbbb",".bbbbbbbb."];
+const CORAZON = [".rr..rr.","rwrrrrrr","rrrrrrrr","rrrrrrrr",".rrrrrr.","..rrrr..","...rr..."];
+const ROTO = [".vv..vv.","vvvvkvvv","vvvkvvvv","vvvvkvvv",".vvkvvv.","..vvvv..","...vv..."];
+const CARRO = ["..aaaaa..",".aaaaaaa.","kaagggaak","kaagggaak",".aaaaaaa.",".aaaaaaa.","kaaaaaaak","kaaaaaaak",".aaaaaaa.","..aaaaa.."];
+
+/* Dibujo en SVG (para la portada) */
+function sprite(g){
+  let r = '';
+  g.forEach((fila, y) => [...fila].forEach((c, x) => {
+    if (c !== '.') r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${COL[c]}"/>`;
+  }));
+  return `<svg class="px" viewBox="0 0 ${g[0].length} ${g.length}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
+}
+/* Dibujo en canvas (para los juegos). s = tamaño del pixel, body = color del carrito */
+function dib(cx, g, x, y, s, body){
+  x = Math.round(x); y = Math.round(y);
+  g.forEach((f, j) => [...f].forEach((c, i) => {
+    if (c === '.') return;
+    cx.fillStyle = c === 'a' ? body : COL[c];
+    cx.fillRect(x + i * s, y + j * s, s, s);
+  }));
+}
+/* Números "al azar" que salen iguales en los dos celulares si usan la misma semilla */
+function rng(s){
+  return () => {
+    s |= 0; s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ========== VARIABLES ========== */
+const $ = id => document.getElementById(id);
+const PREFIJO = 'pixelamor-';
+let peer, conn, yo = '', otro = '', esHost = false;
+let miRes = null, suRes = null, juegoAct = null, enCurso = false;
+const punt = {yo: 0, otro: 0};
+
+function show(id){
+  document.querySelectorAll('.pantalla').forEach(s => s.classList.toggle('on', s.id === id));
+  window.scrollTo(0, 0);
+}
+function msg(t){ $('msg').textContent = t; }
+function nombre(){ return $('nombre').value.trim() || 'Jugador'; }
+function codigo(){
+  const L = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+  return Array.from({length: 4}, () => L[Math.floor(Math.random() * L.length)]).join('');
+}
+function enviar(o){ if (conn && conn.open) conn.send(o); }
+function actualizarMarcador(){
+  $('marcador').textContent = `${yo} ${punt.yo} ♥ ${punt.otro} ${otro}`;
+}
+
+/* ========== CONEXIÓN ONLINE (PeerJS) ========== */
+function crearSala(){
+  if (typeof Peer === 'undefined'){ msg('No cargó la conexión. Revisa tu internet.'); return; }
+  yo = nombre(); esHost = true;
+  const code = codigo();
+  peer = new Peer(PREFIJO + code);
+  peer.on('open', () => { $('codigo').textContent = code; show('espera'); });
+  peer.on('connection', c => {
+    if (conn) { c.close(); return; }
+    conn = c; conectar();
+  });
+  peer.on('error', e => {
+    if (e.type === 'unavailable-id'){ peer.destroy(); crearSala(); }
+    else msg('No se pudo crear la sala. Revisa tu internet.');
+  });
+}
+
+function unirme(){
+  if (typeof Peer === 'undefined'){ msg('No cargó la conexión. Revisa tu internet.'); return; }
+  const code = $('codeIn').value.trim().toUpperCase();
+  if (code.length < 4){ msg('Escribe el código de 4 letras'); return; }
+  yo = nombre(); esHost = false;
+  msg('Conectando...');
+  peer = new Peer();
+  peer.on('open', () => {
+    conn = peer.connect(PREFIJO + code, {reliable: true});
+    conectar();
+    setTimeout(() => { if (!conn.open) msg('No se pudo conectar. Prueba de nuevo o cambia de WiFi a datos.'); }, 12000);
+  });
+  peer.on('error', e => {
+    msg(e.type === 'peer-unavailable' ? 'No encuentro esa sala. Revisa el código.' : 'No se pudo conectar. Intenta de nuevo.');
+  });
+}
+
+function conectar(){
+  const hola = () => enviar({t: 'hola', n: yo});
+  if (conn.open) hola(); else conn.on('open', hola);
+  conn.on('data', recibir);
+  conn.on('close', () => { alert('Tu pareja se desconectó 💔'); location.reload(); });
+}
+
+function recibir(m){
+  if (m.t === 'hola'){ otro = m.n; actualizarMarcador(); show('menu'); }
+  else if (m.t === 'start'){ if (esHost && enCurso) return; empezar(m.g, m.d); }
+  else if (m.t === 'live'){ const e = $('rv'); if (e) e.textContent = m.v; }
+  else if (m.t === 'res' && m.g === juegoAct){ suRes = m.v; revisar(); }
+}
+
+/* ========== FLUJO DE LOS JUEGOS ========== */
+function empezar(g, d){
+  juegoAct = g; miRes = null; suRes = null; enCurso = true;
+  show('juego');
+  JUEGOS[g](d);
+}
+
+function cuentaAtras(cb){
+  let n = 3;
+  const e = $('cuenta');
+  e.textContent = n;
+  const iv = setInterval(() => {
+    n--;
+    if (n > 0) e.textContent = n;
+    else { clearInterval(iv); e.textContent = '¡YA!'; cb(); }
+  }, 800);
+}
+
+function terminar(v){
+  miRes = v;
+  enviar({t: 'res', g: juegoAct, v});
+  if (suRes === null){
+    $('juego').innerHTML = `<h2>¡LISTO!</h2><div class="panel"><p>Esperando a ${otro}...</p></div>`;
+  }
+  revisar();
+}
+function revisar(){ if (miRes !== null && suRes !== null) resultado(); }
+
+const MODO = {lluvia: 'alto', reflejos: 'bajo', carrera: 'alto'};
+const FMT = {
+  lluvia: v => v + ' puntos',
+  reflejos: v => v >= 9999 ? 'se adelantó 💥' : v + ' ms',
+  carrera: v => v + ' metros'
+};
+
+function resultado(){
+  enCurso = false;
+  const g = juegoAct;
+  let r = 0;
+  if (miRes !== suRes) r = (MODO[g] === 'alto' ? miRes > suRes : miRes < suRes) ? 1 : -1;
+  if (r === 1) punt.yo++;
+  if (r === -1) punt.otro++;
+  actualizarMarcador();
+  const t = r === 1 ? '¡GANASTE! 🎉' : r === -1 ? '¡GANÓ ' + otro.toUpperCase() + '! 💗' : '¡EMPATE! 🤝';
+  $('juego').innerHTML =
+    `<h2>${t}</h2>
+     <div class="panel"><p>${yo}: ${FMT[g](miRes)}</p><p>${otro}: ${FMT[g](suRes)}</p></div>
+     <div class="marcador">${$('marcador').textContent}</div>
+     <button class="btn am" id="otra">SEGUIR JUGANDO</button>`;
+  $('otra').onclick = () => show('menu');
+}
+
+/* ========== DATOS DE LOS JUEGOS (iguales para los dos) ========== */
+function crearLluvia(seed){
+  const r = rng(seed), L = [];
+  for (let i = 0; i < 42; i++){
+    L.push({t: 700 + i * 440 + Math.floor(r() * 160), x: Math.floor(r() * 104), r: r() < 0.22, v: 60 + Math.floor(r() * 35)});
+  }
+  return L;
+}
+function crearPista(seed){
+  const r = rng(seed + 7), P = [];
+  const C = ['#5b8cff', '#ffb703', '#2ecc71', '#9b5de5'];
+  for (let i = 0; i < 24; i++){
+    const d = 130 + i * 68 + Math.floor(r() * 12);
+    const a = Math.floor(r() * 3);
+    P.push({d, l: a, c: C[Math.floor(r() * 4)]});
+    if (r() < 0.35){
+      const b = (a + 1 + Math.floor(r() * 2)) % 3;
+      P.push({d, l: b, c: C[Math.floor(r() * 4)]});
+    }
+  }
+  return P;
+}
+
+/* ========== LOS MINIJUEGOS ========== */
+const JUEGOS = {
+
+  /* --- Atrapa corazones --- */
+  lluvia(d){
+    const W = 120, H = 150, L = crearLluvia(d.seed);
+    let bx = 50, score = 0;
+    $('juego').innerHTML =
+      `<h2>ATRAPA CORAZONES</h2><p>Mueve el dedo y atrapa 💗. ¡Esquiva los 💔!</p>
+       <div class="grande" id="cuenta">3</div>
+       <div class="hud"><span>Tú: <b id="n">0</b></span><span id="tt">20 s</span><span>${otro}: <b id="rv">0</b></span></div>
+       <canvas id="cv" width="${W}" height="${H}"></canvas>`;
+    const cv = $('cv'), cx = cv.getContext('2d');
+    const mover = e => {
+      const r = cv.getBoundingClientRect();
+      bx = Math.max(0, Math.min(W - 20, (e.clientX - r.left) / r.width * W - 10));
+    };
+    cv.addEventListener('pointerdown', mover);
+    cv.addEventListener('pointermove', mover);
+    const
